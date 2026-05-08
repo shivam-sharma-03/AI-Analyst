@@ -114,7 +114,7 @@ Option B: The Manual Way 💻
 
     If you don't have Docker, you can run the system natively using Python.
 
-    Step 1: Setup Virtual Environment & Install Dependencies
+Step 1: Setup Virtual Environment & Install Dependencies
     python -m venv .venv
 
     # Activate on Windows
