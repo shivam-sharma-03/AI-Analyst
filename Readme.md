@@ -24,32 +24,33 @@ Unlike simple chatbots, this system uses **LangGraph** to create a stateful, too
 # 🏗️ Technical Architecture
 
 ```text
-                                                                ┌─────────────────┐
-                                                                │  Streamlit UI   │
-                                                                │   (Frontend)    │
-                                                                └────────┬────────┘
-                                                                        │
-                                                                        ↓
-                                                                ┌─────────────────┐
-                                                                │     FastAPI     │
-                                                                │   (REST API)    │
-                                                                └────────┬────────┘
-                                                                        │
-                                                                        ↓
-                                                                ┌─────────────────┐
-                                                                │    LangGraph    │
-                                                                │   Agent Core    │
-                                                                └────────┬────────┘
-                                                                    ┌────┴────┐
-                                                                    ↓         ↓
-                                                                ┌────────┐ ┌──────────┐
-                                                                │  Groq  │ │ FastMCP  │
-                                                                │  LLM   │ │  Server  │
-                                                                └────────┘ └─────┬────┘
-                                                                                ↓
-                                                                            ┌──────────┐
-                                                                            │PostgreSQL│
-                                                                            └──────────┘
+                                                              ┌─────────────────┐
+                                                              │  Streamlit UI   │
+                                                              │   (Frontend)    │
+                                                              └────────┬────────┘
+                                                                      │
+                                                                      ↓
+                                                              ┌─────────────────┐
+                                                              │     FastAPI     │
+                                                              │   (REST API)    │
+                                                              └────────┬────────┘
+                                                                      │
+                                                                      ↓
+                                                              ┌─────────────────┐
+                                                              │    LangGraph    │
+                                                              │   Agent Core    │
+                                                              └────────┬────────┘
+                                                                  ┌────┴────┐
+                                                                  ↓         ↓
+                                                              ┌────────┐ ┌──────────┐
+                                                              │  Groq  │ │ FastMCP  │
+                                                              │  LLM   │ │  Server  │
+                                                              └────────┘ └─────┬────┘
+                                                                              ↓
+                                                                          ┌──────────┐
+                                                                          │PostgreSQL│
+                                                                          └──────────┘
+
 ```
 ---
 
