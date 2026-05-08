@@ -172,8 +172,8 @@ credit_score_agent/
     🧾 Professional Memo Generation: Structured output with clear recommendations.
 
 📌 Future Improvements
-Multi-agent financial review workflow
-PDF export support
-Real-time bank integrations
-Authentication & role-based access
-Cloud deployment (AWS/GCP/Azure)
+    Multi-agent financial review workflow
+    PDF export support
+    Real-time bank integrations
+    Authentication & role-based access
+    Cloud deployment (AWS/GCP/Azure)
