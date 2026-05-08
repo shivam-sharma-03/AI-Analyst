@@ -50,26 +50,40 @@ Unlike simple chatbots, this system uses **LangGraph** to create a stateful, too
             ┌──────────┐
             │PostgreSQL│
             └──────────┘
-🛠️ Tech Stack
-Component	Technology
-Frontend	Streamlit (Searchable Dashboard with Session Persistence)
-API Layer	FastAPI (Asynchronous endpoints with Pydantic validation)
-Agent Orchestration	LangGraph (Stateful graph with ToolNode)
-LLM Inference	Groq - Llama-3.3-70B-Versatile (Ultra-fast reasoning)
-Database Bridge	FastMCP (Model Context Protocol)
-Database	PostgreSQL (Client financial records)
-Containerization	Docker & Docker Compose
-🚀 Getting Started
-1️⃣ Prerequisites
-Python 3.10+
-PostgreSQL (Running on your host machine)
-Groq API Key
-(Optional but recommended) Docker Desktop
-2️⃣ Environment Setup
 
-Create a .env file in the root directory.
 
-If using Docker:
+# 🛠️ Tech Stack
+
+| Component | Technology |
+|------------|-------------|
+| Frontend | Streamlit (Searchable Dashboard with Session Persistence) |
+| API Layer | FastAPI (Asynchronous endpoints with Pydantic validation) |
+| Agent Orchestration | LangGraph (Stateful graph with ToolNode) |
+| LLM Inference | Groq - Llama-3.3-70B-Versatile (Ultra-fast reasoning) |
+| Database Bridge | FastMCP (Model Context Protocol) |
+| Database | PostgreSQL (Client financial records) |
+| Containerization | Docker & Docker Compose |
+
+---
+
+# 🚀 Getting Started
+
+## 1️⃣ Prerequisites
+
+- Python 3.10+
+- PostgreSQL (Running on your host machine)
+- Groq API Key
+- (Optional but recommended) Docker Desktop
+
+---
+
+## 2️⃣ Environment Setup
+
+Create a `.env` file in the root directory.
+
+### If using Docker:
+
+```env
 DB_USER=postgres
 DB_PASSWORD=your_password
 DB_HOST=host.docker.internal
@@ -80,25 +94,28 @@ GROQ_API_KEY=your_groq_api_key_here
 
 ⚠️ Note: If running WITHOUT Docker, change DB_HOST and DATABASE_URL host to localhost instead of host.docker.internal.
 
-3️⃣ Database Seeding (Generate 200+ Clients)
+## 3️⃣ Database Seeding (Generate 200+ Clients)
 
 Before running the app, populate your PostgreSQL database with realistic Fintech data:
 
 python scripts/seed_expanded_data.py
-4️⃣ Running the System
-Option A: The Docker Way 🐳 (Recommended)
 
-If you have Docker installed, you can launch the entire infrastructure with a single command:
+## 4️⃣ Running the System
 
-docker-compose up --build
+## Option A: The Docker Way 🐳 (Recommended)
+
+### If you have Docker installed, you can launch the entire infrastructure with a single command:
+
+```docker-compose up --build
 ✅ Access URLs
 Dashboard → http://localhost:8501
 API → http://localhost:8000
-Option B: The Manual Way 💻
+
+## Option B: The Manual Way 💻
 
 If you don't have Docker, you can run the system natively using Python.
 
-Step 1: Setup Virtual Environment & Install Dependencies
+## Step 1: Setup Virtual Environment & Install Dependencies
 python -m venv .venv
 
 # Activate on Windows
@@ -109,9 +126,11 @@ source .venv/bin/activate
 
 # Install required packages
 pip install -r requirements.txt
-Step 2: Start the Backend (Terminal 1)
+
+## Step 2: Start the Backend (Terminal 1)
 uvicorn api.main:app --reload
-Step 3: Start the Frontend (Terminal 2)
+
+## Step 3: Start the Frontend (Terminal 2)
 
 Open a new terminal, activate the virtual environment again, and run:
 
@@ -139,22 +158,21 @@ credit_score_agent/
 ├── .env                         # Environment Variables
 ├── requirements.txt             # Python Dependencies
 └── README.md                    # Project Documentation
-🎨 Key Features
-✨ Frontend (Streamlit)
-🔍 Searchable Client Selection: Type-to-filter dropdown for 200+ clients.
-📊 Real-time Financial Metrics: Instant visual boxes for Credit Score, Utilization, and Income.
-💾 Persistent Sessions: State-managed UI ensures data stays visible after downloading reports.
-📥 Exportable Reports: Download the professional Credit Memo as a .md file.
-🤖 Agent Capabilities
-⚡ Tool Calling: Automatically decides when to fetch data via MCP.
-📉 Risk Analysis: Evaluates DTI ratio, credit utilization, and default history.
-🧾 Professional Memo Generation: Structured output with clear recommendations.
-📌 Future Improvements
-Multi-agent financial review workflow
-PDF export support
-Real-time bank integrations
-Authentication & role-based access
-Cloud deployment (AWS/GCP/Azure)
-🧑‍💻 Author
 
-Built with ❤️ using LangGraph, FastAPI, Streamlit, PostgreSQL, and Groq LLMs.
+# 🎨 Key Features
+    ✨ Frontend (Streamlit)
+    🔍 Searchable Client Selection: Type-to-filter dropdown for 200+ clients.
+    📊 Real-time Financial Metrics: Instant visual boxes for Credit Score, Utilization, and Income.
+    💾 Persistent Sessions: State-managed UI ensures data stays visible after downloading reports.
+    📥 Exportable Reports: Download the professional Credit Memo as a .md file.
+    🤖 Agent Capabilities
+    ⚡ Tool Calling: Automatically decides when to fetch data via MCP.
+    📉 Risk Analysis: Evaluates DTI ratio, credit utilization, and default history.
+    🧾 Professional Memo Generation: Structured output with clear recommendations.
+
+#📌 Future Improvements
+    Multi-agent financial review workflow
+    PDF export support
+    Real-time bank integrations
+    Authentication & role-based access
+    Cloud deployment (AWS/GCP/Azure)
