@@ -24,6 +24,7 @@ Unlike simple chatbots, this system uses **LangGraph** to create a stateful, too
 # 🏗️ Technical Architecture
 
 ```text
+<<<<<<< HEAD
                                     ┌─────────────────┐
                                     │  Streamlit UI   │
                                     │   (Frontend)    │
