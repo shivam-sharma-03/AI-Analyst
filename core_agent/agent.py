@@ -1,93 +1,105 @@
 import os
 import logging
-from typing import Annotated, TypedDict
+from typing import Annotated, TypedDict, List
 from dotenv import load_dotenv
 
-# LangChain & LangGraph Imports
+# LangChain & LangGraph
 from langchain_groq import ChatGroq
-from langchain_core.messages import SystemMessage, BaseMessage
-from langchain_core.tools import tool
+from langchain_core.messages import SystemMessage, BaseMessage, HumanMessage
 from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode
 
-# Importing the function directly from your Stage 2 MCP server
+# Imports from your modules
 from mcp_server.mcp_server import get_client_financial_data
+from core_agent.policy import check_user_permission
 
 # 1. Setup Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("EnterpriseAgent")
 
-# Load environment variables
 load_dotenv()
-
-# Check for API Key
 api_key = os.getenv("GROQ_API_KEY")
-if not api_key:
-    logger.error("❌ GROQ_API_KEY is missing in .env file! Please check.")
 
-# 2. Define the Tool
-@tool
-def fetch_client_data(client_id: int) -> str:
-    """
-    ALWAYS use this tool to fetch the financial profile of a client using their client_id.
-    Do NOT guess or hallucinate the data. Fetch it first from the database.
-    """
-    logger.info(f"🤖 Agent is using tool to fetch data for client: {client_id}")
-    return get_client_financial_data(client_id)
-
-tools = [fetch_client_data]
-
-# 3. Define Agent State
+# 2. Define Enterprise State
 class AgentState(TypedDict):
-    messages: Annotated[list[BaseMessage], add_messages]
+    messages: List[BaseMessage]
+    client_id: int
+    user_info: dict
+    client_data: str
+    final_memo: str
+    status: str  # approved/denied/submitted
 
-# 4. System Prompt
-SYSTEM_PROMPT = """You are an expert, highly analytical Credit Score Analyst.
-Your job is to generate a formal, professional Credit Memo for clients based on real data.
-
-Follow these strict steps:
-1. You will receive a request containing a Client ID.
-2. YOU MUST USE YOUR TOOL 'fetch_client_data' to get the real financial data for that ID. 
-3. Analyze their risk based on income vs. debt, past defaults, and credit utilization.
-4. Generate a formal Credit Memo with EXACTLY these 3 sections:
-   - **Executive Summary:** Brief overview of the client and their income.
-   - **Risk Assessment:** Highlight any defaults, high utilization, or positive financial behaviors.
-   - **Final Recommendation:** Clearly state whether a new loan should be APPROVED, REJECTED, or requires MANUAL REVIEW, and explain why.
-
-Do not include any conversational filler. Output the memo directly in Markdown.
-"""
-
+# 3. Initialize LLM
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",  
+    model="llama-3.3-70b-versatile",
     api_key=api_key,
     temperature=0.1
 )
 
-llm_with_tools = llm.bind_tools(tools)
+# --- NODES (Jira US-3, US-4 Requirements) ---
 
-# 6. Define Graph Nodes
-def chatbot_node(state: AgentState):
-    messages_for_llm = [SystemMessage(content=SYSTEM_PROMPT)] + state["messages"]
-    logger.info("🧠 LLM is thinking and analyzing...")
-    response = llm_with_tools.invoke(messages_for_llm)
-    return {"messages": [response]}
+# Node 1: Validation (Identity & Policy Resolution)
+def validation_node(state: AgentState):
+    user_id = state.get("user_info", {}).get("employee_id", "GUEST")
+    client_id = state["client_id"]
+    
+    logger.info(f"🛡️ Validating access for User: {user_id} on Client: {client_id}")
+    check = check_user_permission(user_id, client_id)
+    
+    if check["status"] == "denied":
+        error_msg = f"Policy Violation: {check['reason']}"
+        return {"status": "denied", "final_memo": error_msg}
+    
+    return {"status": "approved"}
 
-# 7. Build the LangGraph
-graph_builder = StateGraph(AgentState)
-graph_builder.add_node("chatbot", chatbot_node)
-graph_builder.add_node("tools", ToolNode(tools=tools))
-graph_builder.add_edge(START, "chatbot")
+# Node 2: Fetch Data (US-2: MCP Tools Integration)
+def fetch_data_node(state: AgentState):
+    if state["status"] == "denied": return state
+    
+    client_id = state["client_id"]
+    logger.info(f"🔌 MCP: Fetching real-time data for ID {client_id}")
+    
+    # Direct tool call logic (No more guessing)
+    data = get_client_financial_data(client_id)
+    return {"client_data": data}
 
-graph_builder.add_conditional_edges(
-    "chatbot",
-    lambda state: "tools" if state["messages"][-1].tool_calls else END,
-)
-graph_builder.add_edge("tools", "chatbot")
+# Node 3: Writing (US-4: Managed Reasoning)
+def writing_node(state: AgentState):
+    if state["status"] == "denied": return state
+    
+    logger.info("🧠 LLM: Analyzing and generating Credit Memo...")
+    system_prompt = "You are a Senior Credit Analyst. Create a formal Markdown Credit Memo (Executive Summary, Risk Assessment, Final Recommendation) using this data: " + state["client_data"]
+    
+    response = llm.invoke([SystemMessage(content=system_prompt)])
+    return {"final_memo": response.content, "messages": [response]}
 
-# Compile the Graph
-credit_agent = graph_builder.compile()
-logger.info("✅ LangGraph Agent Core Compiled successfully (Powered by Groq)!")
+# Node 4: Submission (US-3: Write/Audit Trail)
+def submission_node(state: AgentState):
+    if state["status"] == "denied": return state
+    
+    client_id = state["client_id"]
+    user_id = state.get("user_info", {}).get("employee_id", "GUEST")
+    
+    # Yahan hum simulate kar rahe hain database mein "Analysis Status" update karna
+    logger.info(f"📝 US-3: Logging final decision for Client {client_id} to Audit Table by {user_id}")
+    
+    # In real world: db.execute("INSERT INTO audit_logs ...")
+    return {"status": "submitted"}
+
+# --- 4. Build The Governed Graph (US-4: Strict Sequence) ---
+
+builder = StateGraph(AgentState)
+
+builder.add_node("validate", validation_node)
+builder.add_node("fetch_data", fetch_data_node)
+builder.add_node("write_memo", writing_node)
+builder.add_node("submit_decision", submission_node)
+
+# Strict Sequence Logic
+builder.add_edge(START, "validate")
+builder.add_edge("validate", "fetch_data")
+builder.add_edge("fetch_data", "write_memo")
+builder.add_edge("write_memo", "submit_decision")
+builder.add_edge("submit_decision", END)
+
+# Compile
+credit_agent = builder.compile()
+logger.info("✅ Enterprise Governed Agent Compiled!")

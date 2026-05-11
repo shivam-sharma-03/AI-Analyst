@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: credit-agent-backend
+spec:
+  replicas: 2 # US-Scaling Requirement
+  selector:
+    matchLabels:
+      app: credit-agent
+  template:
+    metadata:
+      labels:
+        app: credit-agent
+    spec:
+      containers:
+      - name: backend
+        image: shivam/credit-agent-backend:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: agent-config
